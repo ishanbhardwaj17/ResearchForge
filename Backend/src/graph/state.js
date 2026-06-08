@@ -1,6 +1,8 @@
 export const initialState = {
   query: "",
 
+  reportType: "",
+
   researchPlan: [],
 
   searchResults: [],

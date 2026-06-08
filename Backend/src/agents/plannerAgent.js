@@ -5,19 +5,36 @@ export const plannerAgent = async (state) => {
   const structuredLLM = llm.withStructuredOutput(plannerSchema);
 
   const result = await structuredLLM.invoke(`
-You are an expert research planner.
+You are a senior research planner.
 
 Topic:
 ${state.query}
 
-Create 5-7 research sections.
+Your task:
+
+1. Determine the report type.
+
+2. Create 5-7 major research sections.
 
 For each section generate:
-- title
-- exactly 3 focused search queries
 
-The search queries should be highly specific and useful for web research.
+- title
+- objective
+- 3-5 research questions
+- 3-8 important keywords
+- 3-5 highly specific search queries
+
+The research questions should guide the investigation.
+
+The search queries should be optimized for finding
+high quality information on the web.
+
+The keywords should help future retrieval and indexing.
 `);
+
+  if (result.sections.length < 3) {
+    throw new Error("Planner generated too few sections");
+  }
 
   console.log("Planner Output:");
   console.log(JSON.stringify(result, null, 2));
