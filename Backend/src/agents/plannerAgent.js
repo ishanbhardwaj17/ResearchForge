@@ -1,53 +1,29 @@
 import { llm } from "../config/gemini.js";
+import { plannerSchema } from "./schemas/plannerSchema.js";
 
 export const plannerAgent = async (state) => {
-  const prompt = `
-You are a professional research planner.
+  const structuredLLM = llm.withStructuredOutput(plannerSchema);
+
+  const result = await structuredLLM.invoke(`
+You are an expert research planner.
 
 Topic:
 ${state.query}
 
-Create a research plan with 5-7 major sections.
+Create 5-7 research sections.
 
-IMPORTANT:
-Return ONLY a JSON array.
-Do not use markdown.
-Do not use code fences.
-Do not explain anything.
+For each section generate:
+- title
+- exactly 3 focused search queries
 
-Example:
-["Introduction","Applications","Benefits","Challenges","Future Trends"]
-`;
+The search queries should be highly specific and useful for web research.
+`);
 
-  const response = await llm.invoke(prompt);
-
-  console.log("Planner Raw Output:");
-  console.log(response.content);
-
-  let researchPlan = [];
-
-  try {
-    const cleaned = response.content
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
-
-    researchPlan = JSON.parse(cleaned);
-  } catch (error) {
-    console.error("Planner parsing failed:", error);
-
-    researchPlan = [
-      "Introduction",
-      "Key Concepts",
-      "Applications",
-      "Benefits",
-      "Challenges",
-      "Future Directions",
-    ];
-  }
+  console.log("Planner Output:");
+  console.log(JSON.stringify(result, null, 2));
 
   return {
     ...state,
-    researchPlan,
+    researchPlan: result.sections,
   };
 };
