@@ -26,4 +26,5 @@ export const initialState = {
 
   score: 0,
   vectorStoreStats: null,
+  runtime: {},
 };

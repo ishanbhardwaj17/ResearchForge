@@ -1,57 +1,64 @@
 import { readUrl } from "../tools/readerTool.js";
 
-const MAX_DOCUMENTS = 8;
+const MAX_DOCUMENTS = 4;
+const READ_CONCURRENCY = 4;
 
 export const readerAgent = async (state) => {
   const scrapedDocuments = [...(state.sourceTexts || [])];
-
-  let documentsRead = 0;
+  const seenUrls = new Set(scrapedDocuments.map((doc) => doc.url).filter(Boolean));
+  const readQueue = [];
 
   for (const url of state.sourceUrls || []) {
-    const content = await readUrl(url);
-
-    if (!content || content.length < 200) {
+    if (seenUrls.has(url)) {
       continue;
     }
 
-    scrapedDocuments.push({
+    seenUrls.add(url);
+    readQueue.push({
       sectionTitle: "User Provided Sources",
       sourceTitle: url,
       url,
-      content,
     });
   }
 
   outerLoop: for (const section of state.searchResults) {
     for (const search of section.searches) {
-      if (documentsRead >= MAX_DOCUMENTS) {
+      if (readQueue.length >= MAX_DOCUMENTS) {
         break outerLoop;
       }
 
       const bestSource = search.results?.[0];
 
-      if (!bestSource) continue;
-
-      console.log(`Reading: ${bestSource.title}`);
-
-      const content = await readUrl(bestSource.url);
-
-      if (!content || content.length < 500) {
-        console.log(`Skipping weak content: ${bestSource.title}`);
+      if (!bestSource || seenUrls.has(bestSource.url)) {
         continue;
       }
 
-      scrapedDocuments.push({
+      seenUrls.add(bestSource.url);
+      readQueue.push({
         sectionTitle: section.title,
-
         sourceTitle: bestSource.title,
-
         url: bestSource.url,
-
-        content,
       });
+    }
+  }
 
-      documentsRead++;
+  for (let index = 0; index < readQueue.length; index += READ_CONCURRENCY) {
+    const batch = readQueue.slice(index, index + READ_CONCURRENCY);
+    const results = await Promise.all(
+      batch.map(async (item) => {
+        console.log(`Reading: ${item.sourceTitle}`);
+        const content = await readUrl(item.url);
+        return { ...item, content };
+      }),
+    );
+
+    for (const result of results) {
+      if (!result.content || result.content.length < 500) {
+        console.log(`Skipping weak content: ${result.sourceTitle}`);
+        continue;
+      }
+
+      scrapedDocuments.push(result);
     }
   }
 

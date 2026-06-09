@@ -156,6 +156,40 @@ async function embedWithGemini(text) {
   return values;
 }
 
+async function embedManyWithGemini(texts) {
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents?key=${process.env.GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        requests: texts.map((text) => ({
+          model: "models/gemini-embedding-001",
+          content: {
+            parts: [{ text }],
+          },
+          outputDimensionality: 768,
+        })),
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Gemini batch embedding failed with status ${response.status}`);
+  }
+
+  const data = await response.json();
+  const embeddings = data?.embeddings?.map((item) => item?.values);
+
+  if (!Array.isArray(embeddings) || embeddings.length !== texts.length) {
+    throw new Error("Gemini batch embedding returned an unexpected payload");
+  }
+
+  return embeddings;
+}
+
 async function embedWithMistral(text) {
   const response = await fetch("https://api.mistral.ai/v1/embeddings", {
     method: "POST",
@@ -181,6 +215,33 @@ async function embedWithMistral(text) {
   }
 
   return values;
+}
+
+async function embedManyWithMistral(texts) {
+  const response = await fetch("https://api.mistral.ai/v1/embeddings", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.MISTRAL_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "mistral-embed",
+      input: texts,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Mistral batch embedding failed with status ${response.status}`);
+  }
+
+  const data = await response.json();
+  const embeddings = data?.data?.map((item) => item?.embedding);
+
+  if (!Array.isArray(embeddings) || embeddings.length !== texts.length) {
+    throw new Error("Mistral batch embedding returned an unexpected payload");
+  }
+
+  return embeddings;
 }
 
 function fallbackPlan(query) {
@@ -307,6 +368,31 @@ export async function embedText(text, options = {}) {
       return provider === "gemini"
         ? await embedWithGemini(text)
         : await embedWithMistral(text);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("No configured embedding provider is available");
+}
+
+export async function embedTexts(texts, options = {}) {
+  if (!Array.isArray(texts) || !texts.length) {
+    return [];
+  }
+
+  const providers = [
+    options.preferredProvider,
+    ...configuredProviders().filter((provider) => provider !== options.preferredProvider),
+  ].filter(Boolean);
+
+  let lastError;
+
+  for (const provider of providers) {
+    try {
+      return provider === "gemini"
+        ? await embedManyWithGemini(texts)
+        : await embedManyWithMistral(texts);
     } catch (error) {
       lastError = error;
     }

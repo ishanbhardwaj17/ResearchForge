@@ -120,7 +120,14 @@ router.post(
       res.status(200).json(
         {
           success: true,
-          ...result,
+          query: result.query,
+          reportId: result.reportId,
+          provider: result.provider,
+          reportType: result.reportType,
+          finalReport: result.finalReport,
+          sources: result.sources,
+          retrievedChunks: result.retrievedChunks,
+          vectorStoreStats: result.vectorStoreStats,
         }
       );
     } catch (error) {
