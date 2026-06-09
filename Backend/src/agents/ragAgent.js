@@ -4,8 +4,10 @@ from "../rag/chunkDocuments.js";
 import { createEmbedding }
 from "../rag/embedDocuments.js";
 
-import { VectorDocument }
-from "../models/VectorDocument.js";
+import {
+  addDocumentsToVectorStore,
+  getVectorStoreStats,
+} from "../services/vectorStore.js";
 
 export const ragAgent =
 async (state) => {
@@ -23,26 +25,27 @@ async (state) => {
     `Chunks created: ${chunks.length}`
   );
 
-  let storedCount = 0;
+  const records = [];
 
   for (const chunk of chunks) {
     try {
       const embedding =
         await createEmbedding(
-          chunk.text
+          chunk.text,
+          { preferredProvider: state.provider }
         );
 
-      await VectorDocument.create({
+      records.push({
+        namespace: state.reportId,
         text:
           chunk.text,
-
         embedding,
-
         metadata:
-          chunk.metadata,
+          {
+            ...chunk.metadata,
+            reportId: state.reportId,
+          },
       });
-
-      storedCount++;
     } catch (error) {
       console.error(
         error.message
@@ -50,11 +53,18 @@ async (state) => {
     }
   }
 
+  const storedCount =
+    await addDocumentsToVectorStore(
+      records
+    );
+
   console.log(
     `Stored chunks: ${storedCount}`
   );
 
   return {
     ...state,
+    vectorStoreStats:
+      getVectorStoreStats(),
   };
 };

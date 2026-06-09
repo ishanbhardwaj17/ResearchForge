@@ -1,6 +1,7 @@
 import { createEmbedding } from "../rag/embedDocuments.js";
-
-import { VectorDocument } from "../models/VectorDocument.js";
+import {
+  searchVectorStore,
+} from "../services/vectorStore.js";
 
 function cosineSimilarity(a, b) {
   let dot = 0;
@@ -21,25 +22,16 @@ function cosineSimilarity(a, b) {
 export const retrievalAgent = async (state) => {
   console.log("Retrieving relevant chunks...");
 
-  const queryEmbedding = await createEmbedding(state.query);
+  const queryEmbedding = await createEmbedding(state.query, {
+    preferredProvider: state.provider,
+  });
 
-  const documents = await VectorDocument.find();
-
-  const scoredDocs = documents.map((doc) => ({
-    doc,
-
-    score: cosineSimilarity(queryEmbedding, doc.embedding),
-  }));
-
-  scoredDocs.sort((a, b) => b.score - a.score);
-
-  const topChunks = scoredDocs.slice(0, 15).map((item) => ({
-    text: item.doc.text,
-
-    metadata: item.doc.metadata,
-
-    score: item.score,
-  }));
+  const topChunks = await searchVectorStore({
+    namespaces: [state.reportId, "global"],
+    embedding: queryEmbedding,
+    limit: 15,
+    similarityFn: cosineSimilarity,
+  });
 
   console.log(`Retrieved Chunks: ${topChunks.length}`);
 

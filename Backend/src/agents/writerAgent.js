@@ -1,6 +1,5 @@
-import { llm } from "../config/gemini.js";
-
-import { Report } from "../models/Report.js";
+import { writeResearchReport } from "../services/aiProvider.js";
+import { saveReport } from "../services/reportStore.js";
 
 export const writerAgent = async (state) => {
   const context = state.retrievedChunks
@@ -41,22 +40,30 @@ ${context}
 `;
 
   const response =
-    await llm.invoke(prompt);
+    await writeResearchReport(prompt, {
+      preferredProvider:
+        state.provider,
+    });
 
-  await Report.create({
+  await saveReport({
+    reportId: state.reportId,
     query: state.query,
-
-    reportType:
-      state.reportType,
-
-    finalReport:
-      response.content,
+    reportType: state.reportType,
+    finalReport: response.text,
+    provider: response.provider,
+    sources: state.retrievedChunks.map((chunk) => chunk.metadata),
   });
 
   return {
     ...state,
+    provider: response.provider,
 
     finalReport:
-      response.content,
+      response.text,
+
+    sources:
+      state.retrievedChunks.map(
+        (chunk) => chunk.metadata
+      ),
   };
 };

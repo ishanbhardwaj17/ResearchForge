@@ -1,5 +1,10 @@
 export const initialState = {
   query: "",
+  reportId: null,
+  provider: null,
+  sourceUrls: [],
+  sourceTexts: [],
+  searchEnabled: true,
 
   reportType: "",
 
@@ -20,6 +25,5 @@ export const initialState = {
   sources: [],
 
   score: 0,
-
-  reportId: null,
+  vectorStoreStats: null,
 };

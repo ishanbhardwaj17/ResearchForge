@@ -2,6 +2,7 @@ import { tavilySearch } from "../tools/tavilyTool.js";
 
 export const searchAgent = async (state) => {
   const searchResults = [];
+  const searchEnabled = state.searchEnabled !== false;
 
   const uniqueQueries = new Set();
 
@@ -11,6 +12,10 @@ export const searchAgent = async (state) => {
     const maxResults = 3;
 
     for (const query of section.searchQueries) {
+      if (!searchEnabled) {
+        break;
+      }
+
       if (uniqueQueries.has(query))
         continue;
 

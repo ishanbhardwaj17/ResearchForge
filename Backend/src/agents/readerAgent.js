@@ -3,9 +3,24 @@ import { readUrl } from "../tools/readerTool.js";
 const MAX_DOCUMENTS = 8;
 
 export const readerAgent = async (state) => {
-  const scrapedDocuments = [];
+  const scrapedDocuments = [...(state.sourceTexts || [])];
 
   let documentsRead = 0;
+
+  for (const url of state.sourceUrls || []) {
+    const content = await readUrl(url);
+
+    if (!content || content.length < 200) {
+      continue;
+    }
+
+    scrapedDocuments.push({
+      sectionTitle: "User Provided Sources",
+      sourceTitle: url,
+      url,
+      content,
+    });
+  }
 
   outerLoop: for (const section of state.searchResults) {
     for (const search of section.searches) {
