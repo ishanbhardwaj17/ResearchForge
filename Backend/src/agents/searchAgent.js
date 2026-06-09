@@ -1,38 +1,63 @@
-import tavilyTool from "../tools/tavilyTool.js";
+import { tavilySearch } from "../tools/tavilyTool.js";
 
 export const searchAgent = async (state) => {
-  const allResults = [];
+  const searchResults = [];
+
+  const uniqueQueries = new Set();
 
   for (const section of state.researchPlan) {
     const sectionResults = [];
 
-    for (const query of section.searchQueries) {
-      try {
-        const results = await tavilyTool.invoke(query);
+    const maxResults = 3;
 
-        sectionResults.push({
+    for (const query of section.searchQueries) {
+      if (uniqueQueries.has(query))
+        continue;
+
+      uniqueQueries.add(query);
+
+      console.log(
+        `Searching: ${query}`
+      );
+
+      const results =
+        await tavilySearch(
           query,
-          results,
-        });
-      } catch (error) {
-        console.error(
-          `Search failed for: ${query}`,
-          error.message
+          maxResults
         );
-      }
+
+      sectionResults.push({
+        query,
+        results,
+      });
     }
 
-    allResults.push({
+    searchResults.push({
       title: section.title,
-      objective: section.objective,
-      researchQuestions: section.researchQuestions,
-      keywords: section.keywords,
-      searches: sectionResults,
+
+      objective:
+        section.objective,
+
+      importance:
+        section.importance,
+
+      researchQuestions:
+        section.researchQuestions,
+
+      keywords:
+        section.keywords,
+
+      expectedSources:
+        section.expectedSources,
+
+      searches:
+        sectionResults,
     });
   }
 
   return {
     ...state,
-    searchResults: allResults,
+
+    searchResults,
   };
 };

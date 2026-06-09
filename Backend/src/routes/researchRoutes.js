@@ -3,24 +3,31 @@ import { workflow } from "../graph/workflow.js";
 
 const router = express.Router();
 
-router.post("/plan", async (req, res) => {
-  try {
-    const { query } = req.body;
+router.post(
+  "/plan",
+  async (req, res) => {
+    try {
+      const { query } =
+        req.body;
 
-    const result = await workflow.invoke({
-      query,
-      researchPlan: [],
-    });
+      const result =
+        await workflow.invoke({
+          query,
+        });
 
-    res.json(result);
-  } catch (error) {
-    console.error(error);
+      res.status(200).json(
+        result
+      );
+    } catch (error) {
+      console.error(error);
 
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+      res.status(500).json({
+        success: false,
+        message:
+          error.message,
+      });
+    }
   }
-});
+);
 
 export default router;

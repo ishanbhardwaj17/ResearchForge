@@ -19,20 +19,11 @@ export const plannerSchema = z.object({
 
         importance: z.number().min(1).max(5),
 
-        researchQuestions: z
-          .array(z.string())
-          .min(3)
-          .max(5),
+        researchQuestions: z.array(z.string()).min(3).max(5),
 
-        keywords: z
-          .array(z.string())
-          .min(3)
-          .max(8),
+        keywords: z.array(z.string()).min(3).max(8),
 
-        searchQueries: z
-          .array(z.string())
-          .min(3)
-          .max(5),
+        searchQueries: z.array(z.string()).length(3),
 
         expectedSources: z
           .array(
@@ -42,11 +33,11 @@ export const plannerSchema = z.object({
               "government_reports",
               "news_articles",
               "case_studies",
-            ])
+            ]),
           )
           .min(1)
           .max(3),
-      })
+      }),
     )
     .min(5)
     .max(7),
