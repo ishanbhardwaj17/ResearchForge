@@ -4,6 +4,7 @@ import { plannerAgent } from "../agents/plannerAgent.js";
 import { searchAgent } from "../agents/searchAgent.js";
 import { readerAgent } from "../agents/readerAgent.js";
 import { ragAgent } from "../agents/ragAgent.js";
+import { retrievalAgent } from "../agents/retrievalAgent.js";
 
 import { initialState } from "./state.js";
 
@@ -25,6 +26,8 @@ graph.addNode("reader", readerAgent);
 
 graph.addNode("rag", ragAgent);
 
+graph.addNode("retrieval", retrievalAgent);
+
 graph.addEdge(START, "planner");
 
 graph.addEdge("planner", "search");
@@ -33,6 +36,8 @@ graph.addEdge("search", "reader");
 
 graph.addEdge("reader", "rag");
 
-graph.addEdge("rag", END);
+graph.addEdge("rag", "retrieval");
+
+graph.addEdge("retrieval", END);
 
 export const workflow = graph.compile();
