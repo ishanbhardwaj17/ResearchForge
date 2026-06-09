@@ -8,9 +8,9 @@ async (documents) => {
 
   const splitter =
     new RecursiveCharacterTextSplitter({
-      chunkSize: 1400,
+      chunkSize: 1000,
 
-      chunkOverlap: 120,
+      chunkOverlap: 200,
     });
 
   const chunks = [];

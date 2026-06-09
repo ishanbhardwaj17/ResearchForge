@@ -36,16 +36,21 @@ export async function addDocumentsToVectorStore(records) {
 }
 
 export async function searchVectorStore({
-  namespaces = [],
+  reportId,
   embedding,
   limit = 10,
   similarityFn,
 }) {
-  const namespaceSet = new Set(namespaces.filter(Boolean));
   const store = readStore();
 
   const scored = store.documents
-    .filter((doc) => !namespaceSet.size || namespaceSet.has(doc.namespace))
+    .filter((doc) => {
+      if (!reportId) {
+        return true;
+      }
+
+      return doc.reportId === reportId || doc.namespace === reportId;
+    })
     .map((doc) => ({
       text: doc.text,
       metadata: doc.metadata,
@@ -63,7 +68,8 @@ export function getVectorStoreStats() {
   const namespaces = {};
 
   for (const document of store.documents) {
-    namespaces[document.namespace] = (namespaces[document.namespace] || 0) + 1;
+    const key = document.reportId || document.namespace || "unknown";
+    namespaces[key] = (namespaces[key] || 0) + 1;
   }
 
   return {

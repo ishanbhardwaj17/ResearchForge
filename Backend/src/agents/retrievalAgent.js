@@ -27,9 +27,9 @@ export const retrievalAgent = async (state) => {
   });
 
   const topChunks = await searchVectorStore({
-    namespaces: [state.reportId, "global"],
+    reportId: state.reportId,
     embedding: queryEmbedding,
-    limit: 15,
+    limit: 20,
     similarityFn: cosineSimilarity,
   });
 

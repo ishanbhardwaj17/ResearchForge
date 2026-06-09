@@ -3,6 +3,12 @@ import mongoose from "mongoose";
 const vectorDocumentSchema =
   new mongoose.Schema(
     {
+      reportId: {
+        type: String,
+        required: true,
+        index: true,
+      },
+
       text: {
         type: String,
         required: true,
