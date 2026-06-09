@@ -33,7 +33,7 @@ export const retrievalAgent = async (state) => {
 
   scoredDocs.sort((a, b) => b.score - a.score);
 
-  const topChunks = scoredDocs.slice(0, 10).map((item) => ({
+  const topChunks = scoredDocs.slice(0, 15).map((item) => ({
     text: item.doc.text,
 
     metadata: item.doc.metadata,
