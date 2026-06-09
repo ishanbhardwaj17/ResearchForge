@@ -1,6 +1,7 @@
 import { StateGraph, START, END } from "@langchain/langgraph";
 
 import { plannerAgent } from "../agents/plannerAgent.js";
+import { searchAgent } from "../agents/searchAgent.js";
 import { initialState } from "./state.js";
 
 const graph = new StateGraph({
@@ -12,7 +13,12 @@ const graph = new StateGraph({
 
 graph.addNode("planner", plannerAgent);
 
+graph.addNode("search", searchAgent);
+
 graph.addEdge(START, "planner");
-graph.addEdge("planner", END);
+
+graph.addEdge("planner", "search");
+
+graph.addEdge("search", END);
 
 export const workflow = graph.compile();

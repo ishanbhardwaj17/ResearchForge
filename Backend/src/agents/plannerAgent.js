@@ -10,7 +10,7 @@ You are a senior research planner.
 Topic:
 ${state.query}
 
-Your task:
+Your responsibilities:
 
 1. Determine the report type.
 
@@ -20,27 +20,42 @@ For each section generate:
 
 - title
 - objective
+- importance (1-5)
 - 3-5 research questions
-- 3-8 important keywords
-- 3-5 highly specific search queries
+- 3-8 keywords
+- 3-5 search queries
+- 1-3 expected source types
 
-The research questions should guide the investigation.
+Allowed expected source types:
 
-The search queries should be optimized for finding
-high quality information on the web.
+research_papers
+industry_reports
+government_reports
+news_articles
+case_studies
 
-The keywords should help future retrieval and indexing.
+Guidelines:
+
+- Higher importance means the topic deserves deeper research.
+- Research questions should drive investigation.
+- Search queries should be specific and optimized for web search.
+- Keywords should support future retrieval and indexing.
+- Avoid overlapping sections.
 `);
 
-  if (result.sections.length < 3) {
-    throw new Error("Planner generated too few sections");
+  if (!result.sections || result.sections.length < 5) {
+    throw new Error("Planner generated insufficient sections");
   }
 
-  console.log("Planner Output:");
+  console.log("\n===== PLANNER OUTPUT =====");
   console.log(JSON.stringify(result, null, 2));
+  console.log("==========================\n");
 
   return {
     ...state,
+
+    reportType: result.reportType,
+
     researchPlan: result.sections,
   };
 };
