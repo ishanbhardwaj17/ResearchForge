@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown'
+import ReportCard from './ReportCard.jsx'
 
 export default function ChatMessage({ message }) {
   const isUser = message.role === 'user'
@@ -15,9 +16,12 @@ export default function ChatMessage({ message }) {
         {isUser ? (
           <p className="text-sm leading-7">{message.content}</p>
         ) : (
-          <div className="markdown-body text-sm leading-7">
-            <ReactMarkdown>{message.content}</ReactMarkdown>
-          </div>
+          <>
+            <div className={`markdown-body text-sm leading-7 ${message.isError ? 'text-rose-200' : ''}`}>
+              <ReactMarkdown>{message.content}</ReactMarkdown>
+            </div>
+            {message.report ? <ReportCard report={message.report} /> : null}
+          </>
         )}
       </div>
     </div>

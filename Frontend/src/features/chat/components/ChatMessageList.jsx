@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { motion } from 'framer-motion'
 import ChatLoadingMessage from './ChatLoadingMessage.jsx'
@@ -6,6 +7,11 @@ import ChatMessage from './ChatMessage.jsx'
 export default function ChatMessageList() {
   const messages = useSelector((state) => state.chat.messages)
   const isLoading = useSelector((state) => state.chat.isLoading)
+  const endRef = useRef(null)
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [messages, isLoading])
 
   if (!messages.length && !isLoading) {
     return null
@@ -24,6 +30,7 @@ export default function ChatMessageList() {
         </motion.div>
       ))}
       {isLoading ? <ChatLoadingMessage /> : null}
+      <div ref={endRef} />
     </div>
   )
 }

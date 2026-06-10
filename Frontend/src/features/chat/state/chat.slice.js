@@ -1,33 +1,27 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-
-const assistantReply = (prompt) => `## Research workspace ready
-
-I can help you turn **"${prompt}"** into a structured multi-agent research run.
-
-- Build a planning workflow
-- Coordinate retrieval, reading, and synthesis agents
-- Render a clean final report in markdown
-`
+import { planResearch } from '../services/research.api.js'
 
 const initialState = {
   draft: '',
   isLoading: false,
+  error: null,
+  activeResearch: null,
   messages: [],
   suggestions: [
     {
-      id: 'smart-budget',
-      title: 'Smart Budget',
-      description: 'A budget that fits your workflow, not the other way around.',
+      id: 'market-map',
+      title: 'Market Map',
+      description: 'Map the competitive landscape of AI research assistants.',
     },
     {
-      id: 'analytics',
-      title: 'Analytics',
-      description: 'Track planning confidence, source quality, and agent throughput.',
+      id: 'technical-brief',
+      title: 'Technical Brief',
+      description: 'Compare RAG, agents, and evaluation patterns for production systems.',
     },
     {
-      id: 'spending',
-      title: 'Research Ops',
-      description: 'Coordinate sources, drafts, and reports across one workspace.',
+      id: 'policy-watch',
+      title: 'Policy Watch',
+      description: 'Summarize the latest policy and safety shifts affecting deployment.',
     },
   ],
   quickActions: ['Create an outline', 'Search the web', 'Summarize sources'],
@@ -36,14 +30,25 @@ const initialState = {
 export const sendMessage = createAsyncThunk(
   'chat/sendMessage',
   async (message) => {
-    await new Promise((resolve) => {
-      window.setTimeout(resolve, 1200)
-    })
+    const result = await planResearch(message)
 
     return {
       id: crypto.randomUUID(),
       role: 'assistant',
-      content: assistantReply(message),
+      content:
+        result.finalReport ||
+        'The research workflow completed, but no report body was returned.',
+      report: {
+        id: result.reportId,
+        title: result.query,
+        reportType: result.reportType,
+        provider: result.provider,
+        content: result.finalReport,
+        sources: Array.isArray(result.sources) ? result.sources : [],
+        retrievedChunks: Array.isArray(result.retrievedChunks)
+          ? result.retrievedChunks
+          : [],
+      },
     }
   },
 )
@@ -58,6 +63,9 @@ const chatSlice = createSlice({
     applySuggestion(state, action) {
       state.draft = action.payload
     },
+    clearError(state) {
+      state.error = null
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -68,7 +76,13 @@ const chatSlice = createSlice({
         }
 
         state.isLoading = true
+        state.error = null
         state.draft = ''
+        state.activeResearch = {
+          query: prompt,
+          status: 'Researching',
+          sourceCount: 0,
+        }
         state.messages.push({
           id: crypto.randomUUID(),
           role: 'user',
@@ -77,13 +91,31 @@ const chatSlice = createSlice({
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
         state.isLoading = false
+        state.activeResearch = {
+          query: action.payload.report.title,
+          status: 'Complete',
+          sourceCount: action.payload.report.sources.length,
+        }
         state.messages.push(action.payload)
       })
-      .addCase(sendMessage.rejected, (state) => {
+      .addCase(sendMessage.rejected, (state, action) => {
         state.isLoading = false
+        state.error =
+          action.error.message || 'Something went wrong while contacting the backend.'
+        state.activeResearch = {
+          query: state.activeResearch?.query || 'Research request',
+          status: 'Error',
+          sourceCount: 0,
+        }
+        state.messages.push({
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: `I couldn't complete that research request.\n\n${state.error}`,
+          isError: true,
+        })
       })
   },
 })
 
-export const { setDraft, applySuggestion } = chatSlice.actions
+export const { setDraft, applySuggestion, clearError } = chatSlice.actions
 export default chatSlice.reducer

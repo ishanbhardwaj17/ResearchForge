@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux'
-import { sendMessage, setDraft } from '../state/chat.slice.js'
+import { clearError, sendMessage, setDraft } from '../state/chat.slice.js'
 
 function IconButton({ children, label }) {
   return (
@@ -17,6 +17,7 @@ export default function ChatComposer() {
   const dispatch = useDispatch()
   const draft = useSelector((state) => state.chat.draft)
   const isLoading = useSelector((state) => state.chat.isLoading)
+  const error = useSelector((state) => state.chat.error)
 
   const handleSubmit = (event) => {
     event.preventDefault()
@@ -30,6 +31,19 @@ export default function ChatComposer() {
 
   return (
     <form onSubmit={handleSubmit} className="glass-panel rounded-[28px] p-4 sm:p-5">
+      {error ? (
+        <div className="mb-4 flex items-start justify-between gap-3 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+          <p>{error}</p>
+          <button
+            type="button"
+            onClick={() => dispatch(clearError())}
+            className="text-xs font-medium uppercase tracking-[0.14em] text-rose-100"
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : null}
+
       <textarea
         value={draft}
         onChange={(event) => dispatch(setDraft(event.target.value))}
@@ -62,7 +76,7 @@ export default function ChatComposer() {
             disabled={isLoading}
             className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-slate-950 transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isLoading ? 'Thinking...' : 'Send'}
+            {isLoading ? 'Researching...' : 'Send'}
             <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-2">
               <path d="M5 12h14M13 5l7 7-7 7" />
             </svg>
